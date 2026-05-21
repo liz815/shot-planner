@@ -5,5 +5,8 @@
   "description": "A free phone-filmmaking shot planner from Film Truth Productions.",
   "engines": {
     "node": ">=18.x"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
   }
 }
