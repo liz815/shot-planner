@@ -1,0 +1,9 @@
+{
+  "name": "phone-shot-planner",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A free phone-filmmaking shot planner from Film Truth Productions.",
+  "engines": {
+    "node": ">=18.x"
+  }
+}

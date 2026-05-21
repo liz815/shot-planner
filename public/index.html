@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Phone Shot-Planner · Film Truth Productions</title>
+<meta name="description" content="A free phone-filmmaking shot planner from Liz Witham at Film Truth Productions. Tell it what you're shooting and get a shot list, framing, and lighting & audio notes." />
+<link rel="icon" href="/logo.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --accent: #e8a04b;
+    --bg: #14110d;
+    --panel: #1c1813;
+    --line: #3a3024;
+    --line-soft: #2a2319;
+    --border-input: #4a3f30;
+    --text: #f4efe8;
+    --text-soft: #cdbfa8;
+    --text-faint: #8a7d68;
+    --text-footer: #6b5f4d;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Fraunces', serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+
+  /* Header */
+  header { text-align: center; }
+  header img.logo {
+    width: 200px;
+    max-width: 60%;
+    height: auto;
+    margin: 0 auto 28px;
+    display: block;
+  }
+  h1.title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(52px, 13vw, 96px);
+    line-height: 0.92;
+    margin: 0;
+    letter-spacing: 1px;
+  }
+  header p.lede {
+    color: #bcae97;
+    font-size: 17px;
+    max-width: 480px;
+    margin: 20px auto 0;
+    line-height: 1.5;
+  }
+
+  /* Labels */
+  .label { display: flex; align-items: baseline; gap: 12px; }
+  .label .num {
+    font-family: 'Bebas Neue', sans-serif;
+    color: var(--accent);
+    font-size: 16px;
+    letter-spacing: 1px;
+  }
+  .label .lbl {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 500;
+  }
+
+  /* Chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .chip {
+    background: var(--panel);
+    border: 1px solid var(--border-input);
+    color: var(--text-soft);
+    border-radius: 2px;
+    padding: 9px 15px;
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--text); }
+  .chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #14110d;
+    font-weight: 600;
+  }
+
+  textarea {
+    width: 100%;
+    margin-top: 12px;
+    background: var(--panel);
+    border: 1px solid var(--border-input);
+    color: var(--text);
+    border-radius: 2px;
+    padding: 14px 16px;
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    line-height: 1.5;
+    resize: vertical;
+  }
+  textarea:focus { outline: none; border-color: var(--accent); }
+
+  .field { margin-top: 34px; }
+
+  .error {
+    color: #e87b5a;
+    font-family: 'Fraunces', serif;
+    margin-top: 14px;
+    font-size: 15px;
+  }
+
+  button.gen {
+    margin-top: 26px;
+    width: 100%;
+    background: var(--accent);
+    color: #14110d;
+    border: none;
+    border-radius: 2px;
+    padding: 18px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: filter 0.15s ease;
+  }
+  button.gen:hover { filter: brightness(1.06); }
+  button.gen:disabled { opacity: 0.7; cursor: default; }
+
+  /* Result */
+  .result { margin-top: 64px; }
+  .result-head { border-top: 1px solid var(--line); padding-top: 40px; }
+  .reel {
+    color: var(--accent);
+    font-family: 'Fraunces', serif;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+  }
+  h2.plan-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 44px;
+    margin: 8px 0 0;
+    line-height: 1;
+  }
+  .plan-summary {
+    font-family: 'Fraunces', serif;
+    color: var(--text-soft);
+    font-size: 17px;
+    line-height: 1.55;
+    margin-top: 14px;
+  }
+  .actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+  .btn-solid {
+    background: var(--accent);
+    color: #14110d;
+    border: none;
+    border-radius: 2px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 17px;
+    letter-spacing: 1px;
+    padding: 11px 22px;
+    cursor: pointer;
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-soft);
+    border: 1px solid var(--border-input);
+    border-radius: 2px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 17px;
+    letter-spacing: 1px;
+    padding: 11px 22px;
+    cursor: pointer;
+  }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 1px;
+    margin: 44px 0 4px;
+    color: #f4efe8;
+  }
+
+  .shot { display: flex; gap: 18px; padding: 18px 0; border-bottom: 1px solid var(--line-soft); }
+  .shot .snum { font-family: 'Bebas Neue', sans-serif; font-size: 30px; color: var(--accent); min-width: 36px; }
+  .shot .sname { font-family: 'Fraunces', serif; font-weight: 600; font-size: 18px; }
+  .shot .sframe { font-family: 'Fraunces', serif; color: var(--text-soft); font-size: 15.5px; margin-top: 5px; line-height: 1.5; }
+  .shot .swhy { font-family: 'Fraunces', serif; color: var(--text-faint); font-size: 14px; margin-top: 5px; font-style: italic; }
+
+  .notes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 34px; }
+  @media (max-width: 540px) { .notes-grid { grid-template-columns: 1fr; } }
+  .note-card { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding: 20px; }
+  .note-card .nc-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; color: var(--accent); margin-bottom: 10px; }
+  .note-card ul { margin: 0; padding: 0; list-style: none; }
+  .note-card li { font-family: 'Fraunces', serif; color: var(--text-soft); font-size: 15px; line-height: 1.5; margin-bottom: 9px; padding-left: 16px; position: relative; }
+  .note-card li::before { content: "·"; position: absolute; left: 0; color: var(--accent); }
+
+  .gotcha { margin-top: 28px; background: #221a10; border: 1px solid var(--accent); border-radius: 2px; padding: 18px 20px; }
+  .gotcha .g-label { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; color: var(--accent); font-size: 18px; }
+  .gotcha .g-text { font-family: 'Fraunces', serif; color: #e6d8c2; font-size: 16px; line-height: 1.5; }
+
+  .pitch { margin-top: 56px; text-align: center; background: var(--panel); border-radius: 2px; padding: 40px 28px; border: 1px solid var(--line); }
+  .pitch h3 { font-family: 'Bebas Neue', sans-serif; font-size: 34px; margin: 0; line-height: 1; }
+  .pitch p { font-family: 'Fraunces', serif; color: var(--text-soft); font-size: 16.5px; max-width: 440px; margin: 14px auto 24px; line-height: 1.55; }
+  .pitch a {
+    display: inline-block; background: var(--accent); color: #14110d;
+    font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1.5px;
+    text-decoration: none; padding: 14px 36px; border-radius: 2px;
+  }
+
+  footer { margin-top: 64px; text-align: center; font-family: 'Fraunces', serif; color: var(--text-footer); font-size: 13px; }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  .fade-up { animation: fadeUp 0.5s ease both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <img class="logo" src="/logo.png" alt="Film Truth Productions" />
+      <h1 class="title">The Phone<br />Shot-Planner</h1>
+      <p class="lede">
+        Tell me what you want to shoot and I'll give you ideas to start working
+        from — a shot list, framing, and lighting &amp; audio notes, built for
+        the camera in your pocket.
+      </p>
+    </header>
+
+    <!-- Form -->
+    <div style="margin-top: 52px;">
+      <div class="label"><span class="num">01</span><span class="lbl">What are you shooting?</span></div>
+      <div class="chips" id="shotChips"></div>
+
+      <div class="field">
+        <div class="label"><span class="num">02</span><span class="lbl">What's the vibe?</span></div>
+        <div class="chips" id="vibeChips"></div>
+      </div>
+
+      <div class="field">
+        <div class="label"><span class="num">03</span><span class="lbl">Describe it in a sentence or two</span></div>
+        <textarea id="desc" rows="3" placeholder="e.g. A 2-minute interview with a local oyster farmer about why the harvest is changing, shot at the dock at golden hour."></textarea>
+      </div>
+
+      <p class="error hidden" id="error"></p>
+
+      <button class="gen" id="genBtn">Build My Shot Plan</button>
+    </div>
+
+    <!-- Result -->
+    <div class="result hidden" id="result"></div>
+
+    <footer>
+      A free tool from Liz Witham · Film Truth Productions
+      <br />
+      <a href="https://www.film-truth.com" target="_blank" rel="noopener noreferrer">www.film-truth.com</a>
+    </footer>
+  </div>
+
+<script>
+  const SHOT_TYPES = [
+    { id: "interview", label: "Interview / talking head" },
+    { id: "broll", label: "B-roll / atmosphere" },
+    { id: "product", label: "Product or demo" },
+    { id: "event", label: "Event / live moment" },
+    { id: "story", label: "Short doc / story" },
+    { id: "reel", label: "Instagram / Facebook reel" },
+    { id: "tiktok", label: "TikTok" },
+  ];
+  const VIBES = [
+    "Warm & intimate", "Clean & professional", "Energetic & punchy",
+    "Cinematic & moody", "Funny", "Quirky", "Informational", "Surreal",
+  ];
+
+  let shotType = "interview";
+  let vibe = VIBES[0];
+  let copied = false;
+  let plan = null;
+
+  const esc = (s) =>
+    String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  // Build chips
+  const shotChips = document.getElementById("shotChips");
+  SHOT_TYPES.forEach((t) => {
+    const b = document.createElement("button");
+    b.className = "chip" + (t.id === shotType ? " active" : "");
+    b.textContent = t.label;
+    b.onclick = () => {
+      shotType = t.id;
+      [...shotChips.children].forEach((c, i) =>
+        c.classList.toggle("active", SHOT_TYPES[i].id === shotType)
+      );
+    };
+    shotChips.appendChild(b);
+  });
+
+  const vibeChips = document.getElementById("vibeChips");
+  VIBES.forEach((v) => {
+    const b = document.createElement("button");
+    b.className = "chip" + (v === vibe ? " active" : "");
+    b.textContent = v;
+    b.onclick = () => {
+      vibe = v;
+      [...vibeChips.children].forEach((c, i) =>
+        c.classList.toggle("active", VIBES[i] === vibe)
+      );
+    };
+    vibeChips.appendChild(b);
+  });
+
+  const descEl = document.getElementById("desc");
+  const errorEl = document.getElementById("error");
+  const genBtn = document.getElementById("genBtn");
+  const resultEl = document.getElementById("result");
+
+  function showError(msg) {
+    errorEl.textContent = msg;
+    errorEl.classList.remove("hidden");
+  }
+  function clearError() {
+    errorEl.textContent = "";
+    errorEl.classList.add("hidden");
+  }
+
+  async function generate() {
+    const desc = descEl.value;
+    if (!desc.trim()) {
+      showError("Tell me a little about what you're shooting first.");
+      return;
+    }
+    clearError();
+    genBtn.disabled = true;
+    genBtn.textContent = "Rolling…";
+    resultEl.classList.add("hidden");
+    plan = null;
+
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ desc, shotType, vibe }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showError(data.error || "Something hiccuped. Try again in a sec.");
+        return;
+      }
+      plan = data;
+      renderPlan();
+    } catch (e) {
+      showError("Something hiccuped generating your plan. Try again in a sec.");
+    } finally {
+      genBtn.disabled = false;
+      genBtn.textContent = "Build My Shot Plan";
+    }
+  }
+
+  function renderPlan() {
+    if (!plan) return;
+    const shotsHtml = (plan.shots || []).map((s, i) => `
+      <div class="shot">
+        <div class="snum">${String(i + 1).padStart(2, "0")}</div>
+        <div>
+          <div class="sname">${esc(s.name)}</div>
+          <div class="sframe">${esc(s.framing)}</div>
+          <div class="swhy">${esc(s.why)}</div>
+        </div>
+      </div>`).join("");
+
+    const lightHtml = (plan.lighting || []).map((l) => `<li>${esc(l)}</li>`).join("");
+    const audioHtml = (plan.audio || []).map((a) => `<li>${esc(a)}</li>`).join("");
+
+    resultEl.innerHTML = `
+      <div class="result-head">
+        <div class="reel">Your Shoot</div>
+        <h2 class="plan-title">${esc(plan.title)}</h2>
+        <p class="plan-summary">${esc(plan.summary)}</p>
+        <div class="actions">
+          <button class="btn-solid" id="pdfBtn">Save as PDF</button>
+          <button class="btn-ghost" id="copyBtn">${copied ? "Copied ✓" : "Copy text"}</button>
+        </div>
+      </div>
+
+      <div class="section-title">The Shot List</div>
+      ${shotsHtml}
+
+      <div class="notes-grid">
+        <div class="note-card"><div class="nc-title">Lighting</div><ul>${lightHtml}</ul></div>
+        <div class="note-card"><div class="nc-title">Audio</div><ul>${audioHtml}</ul></div>
+      </div>
+
+      ${plan.gotcha ? `
+      <div class="gotcha">
+        <span class="g-label">Watch out — </span>
+        <span class="g-text">${esc(plan.gotcha)}</span>
+      </div>` : ""}
+
+      <div class="pitch">
+        <h3>Want to make it for real?</h3>
+        <p>I run hands-on workshops on making short documentaries with just your
+        phone — and take on production &amp; science-communication projects
+        through Film Truth Productions.</p>
+        <a href="https://www.film-truth.com" target="_blank" rel="noopener noreferrer">Get in touch</a>
+      </div>
+    `;
+    resultEl.classList.remove("hidden");
+    resultEl.classList.add("fade-up");
+
+    document.getElementById("pdfBtn").onclick = downloadPdf;
+    document.getElementById("copyBtn").onclick = copyPlan;
+
+    setTimeout(() => resultEl.scrollIntoView({ behavior: "smooth" }), 80);
+  }
+
+  function planToText() {
+    if (!plan) return "";
+    const lines = [];
+    lines.push((plan.title || "").toUpperCase());
+    lines.push(plan.summary || "");
+    lines.push("");
+    lines.push("THE SHOT LIST");
+    (plan.shots || []).forEach((s, i) => {
+      lines.push(`${i + 1}. ${s.name}`);
+      lines.push(`   Framing: ${s.framing}`);
+      lines.push(`   Why: ${s.why}`);
+    });
+    lines.push("");
+    lines.push("LIGHTING");
+    (plan.lighting || []).forEach((l) => lines.push(`- ${l}`));
+    lines.push("");
+    lines.push("AUDIO");
+    (plan.audio || []).forEach((a) => lines.push(`- ${a}`));
+    if (plan.gotcha) {
+      lines.push("");
+      lines.push(`WATCH OUT: ${plan.gotcha}`);
+    }
+    lines.push("");
+    lines.push("— Made with the Phone Shot-Planner by Liz Witham, Film Truth Productions");
+    return lines.join("\n");
+  }
+
+  async function copyPlan() {
+    try {
+      await navigator.clipboard.writeText(planToText());
+      copied = true;
+      const btn = document.getElementById("copyBtn");
+      if (btn) btn.textContent = "Copied ✓";
+      setTimeout(() => {
+        copied = false;
+        const b = document.getElementById("copyBtn");
+        if (b) b.textContent = "Copy text";
+      }, 2000);
+    } catch (e) {
+      showError("Couldn't copy automatically — try selecting the text instead.");
+    }
+  }
+
+  function downloadPdf() {
+    if (!plan) return;
+    const shotRows = (plan.shots || []).map((s, i) =>
+      `<div class="shot"><span class="num">${String(i + 1).padStart(2, "0")}</span><div><div class="sn">${esc(s.name)}</div><div class="sf">${esc(s.framing)}</div><div class="sw">${esc(s.why)}</div></div></div>`
+    ).join("");
+    const lightRows = (plan.lighting || []).map((l) => `<li>${esc(l)}</li>`).join("");
+    const audioRows = (plan.audio || []).map((a) => `<li>${esc(a)}</li>`).join("");
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(plan.title)}</title>
+<style>
+  @media print { @page { margin: 18mm; } }
+  body { font-family: Georgia, serif; color: #1a1a1a; max-width: 700px; margin: 30px auto; padding: 0 24px; line-height: 1.5; }
+  .kicker { letter-spacing: 3px; text-transform: uppercase; font-size: 11px; color: #b07b2e; }
+  h1 { font-size: 30px; margin: 6px 0 4px; }
+  .summary { color: #444; font-size: 15px; margin-bottom: 26px; }
+  h2 { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; color: #b07b2e; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-top: 28px; }
+  .shot { display: flex; gap: 14px; padding: 12px 0; border-bottom: 1px solid #eee; }
+  .shot .num { font-weight: bold; color: #b07b2e; font-size: 18px; min-width: 28px; }
+  .shot .sn { font-weight: bold; font-size: 16px; }
+  .shot .sf { color: #333; font-size: 14px; margin-top: 3px; }
+  .shot .sw { color: #777; font-style: italic; font-size: 13px; margin-top: 3px; }
+  ul { padding-left: 18px; }
+  li { margin-bottom: 6px; font-size: 14px; }
+  .gotcha { background: #fbf3e6; border-left: 3px solid #b07b2e; padding: 12px 16px; margin-top: 22px; font-size: 14px; }
+  footer { margin-top: 36px; border-top: 1px solid #ddd; padding-top: 12px; color: #999; font-size: 12px; text-align: center; }
+</style></head><body onload="window.print()">
+  <div class="kicker">Phone Shot-Plan</div>
+  <h1>${esc(plan.title)}</h1>
+  <div class="summary">${esc(plan.summary)}</div>
+  <h2>The Shot List</h2>
+  ${shotRows}
+  <h2>Lighting</h2><ul>${lightRows}</ul>
+  <h2>Audio</h2><ul>${audioRows}</ul>
+  ${plan.gotcha ? `<div class="gotcha"><strong>Watch out:</strong> ${esc(plan.gotcha)}</div>` : ""}
+  <footer>Made with the Phone Shot-Planner by Liz Witham · Film Truth Productions · www.film-truth.com</footer>
+</body></html>`;
+    const w = window.open("", "_blank");
+    if (!w) {
+      showError("Pop-up blocked — allow pop-ups to save as PDF, or use Copy text.");
+      return;
+    }
+    w.document.write(html);
+    w.document.close();
+  }
+
+  genBtn.onclick = generate;
+</script>
+</body>
+</html>
