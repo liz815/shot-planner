@@ -130,5 +130,3 @@ Give 4 to 6 shots. Keep everything practical and specific to shooting on a phone
       .json({ error: "Something went wrong on the server. Try again shortly." });
   }
 }
-
-Displaying generate-js-CODE.txt.
