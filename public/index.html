@@ -1,3 +1,7 @@
+index-html-CODE.txt
+Page
+/1
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -192,6 +196,18 @@
     color: #f4efe8;
   }
 
+  .orient { display: flex; align-items: center; gap: 12px; margin: 10px 0 16px; flex-wrap: wrap; }
+  .orient-tag {
+    font-family: 'Bebas Neue', sans-serif; font-size: 17px; letter-spacing: 1px;
+    background: var(--accent); color: #14110d; padding: 5px 14px; border-radius: 2px;
+  }
+  .orient-why { font-family: 'Fraunces', serif; color: var(--text-soft); font-size: 15px; font-style: italic; }
+  .settings-box { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; overflow: hidden; }
+  .setting-row { padding: 14px 18px; border-bottom: 1px solid var(--line-soft); }
+  .setting-row:last-child { border-bottom: none; }
+  .set-name { font-family: 'Fraunces', serif; font-weight: 600; font-size: 16px; color: #f4efe8; }
+  .set-why { font-family: 'Fraunces', serif; color: var(--text-soft); font-size: 14.5px; margin-top: 4px; line-height: 1.45; }
+
   .shot { display: flex; gap: 18px; padding: 18px 0; border-bottom: 1px solid var(--line-soft); }
   .shot .snum { font-family: 'Bebas Neue', sans-serif; font-size: 30px; color: var(--accent); min-width: 36px; }
   .shot .sname { font-family: 'Fraunces', serif; font-weight: 600; font-size: 18px; }
@@ -209,6 +225,8 @@
   .gotcha { margin-top: 28px; background: #221a10; border: 1px solid var(--accent); border-radius: 2px; padding: 18px 20px; }
   .gotcha .g-label { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; color: var(--accent); font-size: 18px; }
   .gotcha .g-text { font-family: 'Fraunces', serif; color: #e6d8c2; font-size: 16px; line-height: 1.5; }
+
+  .plan-caveat { font-family: 'Fraunces', serif; font-style: italic; color: var(--text-faint); font-size: 14.5px; text-align: center; line-height: 1.5; margin: 40px auto 0; max-width: 460px; }
 
   .pitch { margin-top: 56px; text-align: center; background: var(--panel); border-radius: 2px; padding: 40px 28px; border: 1px solid var(--line); }
   .pitch h3 { font-family: 'Bebas Neue', sans-serif; font-size: 34px; margin: 0; line-height: 1; }
@@ -233,24 +251,30 @@
       <img class="logo" src="/logo.png" alt="Film Truth Productions" />
       <h1 class="title">The Phone<br />Shot-Planner</h1>
       <p class="lede">
-        Tell me what you want to shoot and I'll give you ideas to start working
-        from — a shot list, framing, and lighting &amp; audio notes, built for
-        the camera in your pocket.
+        Tell this tool what you want to shoot and it'll suggest a starting point
+        — a shot list, framing, and lighting &amp; audio notes for the camera in
+        your pocket. It's here to help you plan, not to replace your own eye:
+        trust your judgment for the shoot in front of you.
       </p>
     </header>
 
     <!-- Form -->
     <div style="margin-top: 52px;">
-      <div class="label"><span class="num">01</span><span class="lbl">What are you shooting?</span></div>
-      <div class="chips" id="shotChips"></div>
+      <div class="label"><span class="num">01</span><span class="lbl">Where's it going?</span></div>
+      <div class="chips" id="platformChips"></div>
 
       <div class="field">
-        <div class="label"><span class="num">02</span><span class="lbl">What's the vibe?</span></div>
+        <div class="label"><span class="num">02</span><span class="lbl">What kind of footage?</span></div>
+        <div class="chips" id="footageChips"></div>
+      </div>
+
+      <div class="field">
+        <div class="label"><span class="num">03</span><span class="lbl">What's the vibe?</span></div>
         <div class="chips" id="vibeChips"></div>
       </div>
 
       <div class="field">
-        <div class="label"><span class="num">03</span><span class="lbl">Describe it in a sentence or two</span></div>
+        <div class="label"><span class="num">04</span><span class="lbl">Describe it in a sentence or two</span></div>
         <textarea id="desc" rows="3" placeholder="e.g. A 2-minute interview with a local oyster farmer about why the harvest is changing, shot at the dock at golden hour."></textarea>
       </div>
 
@@ -270,21 +294,27 @@
   </div>
 
 <script>
-  const SHOT_TYPES = [
+  const PLATFORMS = [
+    { id: "social", label: "Social vertical (Reels / TikTok / Shorts)" },
+    { id: "youtube", label: "YouTube" },
+    { id: "broadcast", label: "TV / broadcast / streaming" },
+    { id: "personal", label: "Personal / keepsake" },
+  ];
+  const FOOTAGE = [
     { id: "interview", label: "Interview / talking head" },
     { id: "broll", label: "B-roll / atmosphere" },
     { id: "product", label: "Product or demo" },
     { id: "event", label: "Event / live moment" },
     { id: "story", label: "Short doc / story" },
-    { id: "reel", label: "Instagram / Facebook reel" },
-    { id: "tiktok", label: "TikTok" },
+    { id: "other", label: "Other" },
   ];
   const VIBES = [
     "Warm & intimate", "Clean & professional", "Energetic & punchy",
     "Cinematic & moody", "Funny", "Quirky", "Informational", "Surreal",
   ];
 
-  let shotType = "interview";
+  let platform = "social";
+  let footage = "interview";
   let vibe = VIBES[0];
   let copied = false;
   let plan = null;
@@ -292,20 +322,25 @@
   const esc = (s) =>
     String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-  // Build chips
-  const shotChips = document.getElementById("shotChips");
-  SHOT_TYPES.forEach((t) => {
-    const b = document.createElement("button");
-    b.className = "chip" + (t.id === shotType ? " active" : "");
-    b.textContent = t.label;
-    b.onclick = () => {
-      shotType = t.id;
-      [...shotChips.children].forEach((c, i) =>
-        c.classList.toggle("active", SHOT_TYPES[i].id === shotType)
-      );
-    };
-    shotChips.appendChild(b);
-  });
+  // Reusable chip builder for option lists with {id, label}.
+  function buildChips(containerId, items, getSelected, setSelected) {
+    const container = document.getElementById(containerId);
+    items.forEach((item) => {
+      const b = document.createElement("button");
+      b.className = "chip" + (item.id === getSelected() ? " active" : "");
+      b.textContent = item.label;
+      b.onclick = () => {
+        setSelected(item.id);
+        [...container.children].forEach((c, i) =>
+          c.classList.toggle("active", items[i].id === getSelected())
+        );
+      };
+      container.appendChild(b);
+    });
+  }
+
+  buildChips("platformChips", PLATFORMS, () => platform, (v) => (platform = v));
+  buildChips("footageChips", FOOTAGE, () => footage, (v) => (footage = v));
 
   const vibeChips = document.getElementById("vibeChips");
   VIBES.forEach((v) => {
@@ -351,7 +386,7 @@
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ desc, shotType, vibe }),
+        body: JSON.stringify({ desc, platform, footage, vibe }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -383,6 +418,25 @@
     const lightHtml = (plan.lighting || []).map((l) => `<li>${esc(l)}</li>`).join("");
     const audioHtml = (plan.audio || []).map((a) => `<li>${esc(a)}</li>`).join("");
 
+    let settingsHtml = "";
+    if (plan.settings) {
+      const recHtml = (plan.settings.recommendations || []).map((r) => `
+        <div class="setting-row">
+          <div class="set-name">${esc(r.setting)}</div>
+          <div class="set-why">${esc(r.why)}</div>
+        </div>`).join("");
+      const orient = plan.settings.orientation
+        ? `<div class="orient">
+             <span class="orient-tag">${esc(plan.settings.orientation)}</span>
+             <span class="orient-why">${esc(plan.settings.orientation_why || "")}</span>
+           </div>`
+        : "";
+      settingsHtml = `
+        <div class="section-title">Camera Settings</div>
+        ${orient}
+        <div class="settings-box">${recHtml}</div>`;
+    }
+
     resultEl.innerHTML = `
       <div class="result-head">
         <div class="reel">Your Shoot</div>
@@ -393,6 +447,8 @@
           <button class="btn-ghost" id="copyBtn">${copied ? "Copied ✓" : "Copy text"}</button>
         </div>
       </div>
+
+      ${settingsHtml}
 
       <div class="section-title">The Shot List</div>
       ${shotsHtml}
@@ -407,6 +463,8 @@
         <span class="g-label">Watch out — </span>
         <span class="g-text">${esc(plan.gotcha)}</span>
       </div>` : ""}
+
+      <p class="plan-caveat">A guide to work from, not a rulebook. Your eye for the moment always comes first.</p>
 
       <div class="pitch">
         <h3>Want to make it for real?</h3>
@@ -431,6 +489,14 @@
     lines.push((plan.title || "").toUpperCase());
     lines.push(plan.summary || "");
     lines.push("");
+    if (plan.settings) {
+      lines.push("CAMERA SETTINGS");
+      if (plan.settings.orientation) {
+        lines.push(`Orientation: ${plan.settings.orientation} — ${plan.settings.orientation_why || ""}`);
+      }
+      (plan.settings.recommendations || []).forEach((r) => lines.push(`- ${r.setting}: ${r.why}`));
+      lines.push("");
+    }
     lines.push("THE SHOT LIST");
     (plan.shots || []).forEach((s, i) => {
       lines.push(`${i + 1}. ${s.name}`);
@@ -447,6 +513,8 @@
       lines.push("");
       lines.push(`WATCH OUT: ${plan.gotcha}`);
     }
+    lines.push("");
+    lines.push("A guide to work from, not a rulebook. Your eye for the moment always comes first.");
     lines.push("");
     lines.push("— Made with the Phone Shot-Planner by Liz Witham, Film Truth Productions");
     return lines.join("\n");
@@ -475,6 +543,16 @@
     ).join("");
     const lightRows = (plan.lighting || []).map((l) => `<li>${esc(l)}</li>`).join("");
     const audioRows = (plan.audio || []).map((a) => `<li>${esc(a)}</li>`).join("");
+    let settingsBlock = "";
+    if (plan.settings) {
+      const recRows = (plan.settings.recommendations || []).map((r) =>
+        `<li><strong>${esc(r.setting)}</strong> — ${esc(r.why)}</li>`
+      ).join("");
+      const orientLine = plan.settings.orientation
+        ? `<p style="margin:6px 0 10px;font-size:14px;"><strong>${esc(plan.settings.orientation)}</strong> — ${esc(plan.settings.orientation_why || "")}</p>`
+        : "";
+      settingsBlock = `<h2>Camera Settings</h2>${orientLine}<ul>${recRows}</ul>`;
+    }
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(plan.title)}</title>
 <style>
   @media print { @page { margin: 18mm; } }
@@ -496,11 +574,13 @@
   <div class="kicker">Phone Shot-Plan</div>
   <h1>${esc(plan.title)}</h1>
   <div class="summary">${esc(plan.summary)}</div>
+  ${settingsBlock}
   <h2>The Shot List</h2>
   ${shotRows}
   <h2>Lighting</h2><ul>${lightRows}</ul>
   <h2>Audio</h2><ul>${audioRows}</ul>
   ${plan.gotcha ? `<div class="gotcha"><strong>Watch out:</strong> ${esc(plan.gotcha)}</div>` : ""}
+  <p style="margin-top:26px;font-style:italic;color:#888;font-size:13px;text-align:center;">A guide to work from, not a rulebook. Your eye for the moment always comes first.</p>
   <footer>Made with the Phone Shot-Planner by Liz Witham · Film Truth Productions · www.film-truth.com</footer>
 </body></html>`;
     const w = window.open("", "_blank");
@@ -516,3 +596,5 @@
 </script>
 </body>
 </html>
+
+Displaying index-html-CODE.txt.
