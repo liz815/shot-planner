@@ -15,7 +15,7 @@ export default async function handler(req, res) {
       .json({ error: "Server is missing its API key. Check Vercel settings." });
   }
 
-  const { desc, platform, footage, vibe } = req.body || {};
+  const { desc, platform, footage, otherText, vibe } = req.body || {};
 
   if (!desc || !String(desc).trim()) {
     return res.status(400).json({ error: "Missing shoot description." });
@@ -45,7 +45,10 @@ export default async function handler(req, res) {
   };
 
   const platformLabel = PLATFORM_LABELS[platform] || platform || "general";
-  const footageLabel = FOOTAGE_LABELS[footage] || footage || "general footage";
+  const footageLabel =
+    footage === "other" && otherText && String(otherText).trim()
+      ? String(otherText).trim()
+      : FOOTAGE_LABELS[footage] || footage || "general footage";
   const orientationGuide =
     PLATFORM_ORIENTATION[platform] ||
     "Choose the orientation that best fits how they intend to share it and say why.";
@@ -91,7 +94,7 @@ Give 4 to 6 shots. Keep everything practical and specific to shooting on a phone
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1000,
+        max_tokens: 2000,
         messages: [{ role: "user", content: prompt }],
       }),
     });
@@ -105,12 +108,20 @@ Give 4 to 6 shots. Keep everything practical and specific to shooting on a phone
     }
 
     const data = await apiRes.json();
-    const text = (data.content || [])
+    let text = (data.content || [])
       .filter((b) => b.type === "text")
       .map((b) => b.text)
       .join("\n")
       .replace(/```json|```/g, "")
       .trim();
+
+    // Be forgiving: if the model added any stray text before/after the JSON,
+    // grab just the outermost { ... } object.
+    const firstBrace = text.indexOf("{");
+    const lastBrace = text.lastIndexOf("}");
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      text = text.slice(firstBrace, lastBrace + 1);
+    }
 
     let parsed;
     try {
