@@ -95,6 +95,9 @@
     color: #14110d;
     font-weight: 600;
   }
+  .chip-icon { display: inline-flex; align-items: center; gap: 8px; }
+  .chip-ic { display: inline-flex; align-items: center; color: var(--accent); }
+  .chip.active .chip-ic { color: #14110d; }
 
   textarea {
     width: 100%;
@@ -269,23 +272,24 @@
 
     <!-- Form -->
     <div style="margin-top: 52px;">
-      <div class="label"><span class="num">01</span><span class="lbl">Where's it going?</span></div>
-      <div class="chips" id="platformChips"></div>
+      <div class="label"><span class="num">01</span><span class="lbl">Describe it in a sentence or two</span></div>
+      <textarea id="desc" rows="3" placeholder="e.g. A 2-minute interview with a local oyster farmer about why the harvest is changing, shot at the dock at golden hour."></textarea>
 
       <div class="field">
-        <div class="label"><span class="num">02</span><span class="lbl">What kind of footage?</span></div>
+        <div class="label"><span class="num">02</span><span class="lbl">Where's it going?</span></div>
+        <div class="chips" id="platformChips"></div>
+      </div>
+
+      <div class="field">
+        <div class="label"><span class="num">03</span><span class="lbl">What will you be shooting?</span></div>
         <div class="chips" id="footageChips"></div>
         <input type="text" id="footageOther" class="other-input hidden" placeholder="Tell us what you're shooting (e.g. a live music set, a real estate walkthrough)" />
       </div>
 
       <div class="field">
-        <div class="label"><span class="num">03</span><span class="lbl">What's the vibe?</span></div>
+        <div class="label"><span class="num">04</span><span class="lbl">What's the vibe?</span></div>
         <div class="chips" id="vibeChips"></div>
-      </div>
-
-      <div class="field">
-        <div class="label"><span class="num">04</span><span class="lbl">Describe it in a sentence or two</span></div>
-        <textarea id="desc" rows="3" placeholder="e.g. A 2-minute interview with a local oyster farmer about why the harvest is changing, shot at the dock at golden hour."></textarea>
+        <input type="text" id="vibeOther" class="other-input hidden" placeholder="Describe the vibe you're after (e.g. nostalgic, dreamy, high-energy)" />
       </div>
 
       <p class="error hidden" id="error"></p>
@@ -304,14 +308,21 @@
   </div>
 
 <script>
+  const ICONS = {
+    social: '<svg width="12" height="17" viewBox="0 0 13 18" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="1" y="1" width="11" height="16" rx="2"/><line x1="5" y1="14" x2="8" y2="14"/></svg>',
+    youtube: '<svg width="17" height="13" viewBox="0 0 18 14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="1" y="1" width="16" height="12" rx="3"/><path d="M7 4.5L11.5 7L7 9.5Z" fill="currentColor" stroke="none"/></svg>',
+    broadcast: '<svg width="18" height="15" viewBox="0 0 19 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="1" y="1.5" width="17" height="11" rx="1.5"/><line x1="6" y1="15" x2="13" y2="15"/><line x1="9.5" y1="12.5" x2="9.5" y2="15"/></svg>',
+    personal: '<svg width="16" height="15" viewBox="0 0 17 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M8.5 14.5C8.5 14.5 1.5 10.5 1.5 5.5C1.5 3 3.5 1.5 5.5 1.5C7 1.5 8 2.5 8.5 3.5C9 2.5 10 1.5 11.5 1.5C13.5 1.5 15.5 3 15.5 5.5C15.5 10.5 8.5 14.5 8.5 14.5Z"/></svg>',
+  };
+
   const PLATFORMS = [
     { id: "social", label: "Social / vertical" },
     { id: "youtube", label: "YouTube" },
-    { id: "broadcast", label: "TV / broadcast / streaming" },
+    { id: "broadcast", label: "TV / streaming / theatrical" },
     { id: "personal", label: "Personal / keepsake" },
   ];
   const FOOTAGE = [
-    { id: "interview", label: "Interview / talking head" },
+    { id: "interview", label: "Interview" },
     { id: "broll", label: "B-roll / atmosphere" },
     { id: "product", label: "Product or demo" },
     { id: "event", label: "Event / live moment" },
@@ -319,26 +330,39 @@
     { id: "other", label: "Other" },
   ];
   const VIBES = [
-    "Warm & intimate", "Clean & professional", "Energetic & punchy",
-    "Cinematic & moody", "Funny", "Quirky", "Informational", "Surreal",
+    { id: "warm", label: "Warm & intimate" },
+    { id: "clean", label: "Clean & professional" },
+    { id: "energetic", label: "Energetic & punchy" },
+    { id: "cinematic", label: "Cinematic & moody" },
+    { id: "funny", label: "Funny" },
+    { id: "quirky", label: "Quirky" },
+    { id: "informational", label: "Informational" },
+    { id: "surreal", label: "Surreal" },
+    { id: "other", label: "Other" },
   ];
 
   let platform = "social";
   let footage = "interview";
-  let vibe = VIBES[0];
+  let vibe = "warm";
   let copied = false;
   let plan = null;
 
   const esc = (s) =>
     String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-  // Reusable chip builder for option lists with {id, label}.
-  function buildChips(containerId, items, getSelected, setSelected) {
+  // Reusable chip builder. items: {id, label}. Optional icons keyed by id.
+  // onSelect(id) runs after selection (e.g. to toggle an "other" field).
+  function buildChips(containerId, items, getSelected, setSelected, icons) {
     const container = document.getElementById(containerId);
     items.forEach((item) => {
       const b = document.createElement("button");
       b.className = "chip" + (item.id === getSelected() ? " active" : "");
-      b.textContent = item.label;
+      if (icons && icons[item.id]) {
+        b.classList.add("chip-icon");
+        b.innerHTML = '<span class="chip-ic">' + icons[item.id] + "</span>" + esc(item.label);
+      } else {
+        b.textContent = item.label;
+      }
       b.onclick = () => {
         setSelected(item.id);
         [...container.children].forEach((c, i) =>
@@ -349,30 +373,24 @@
     });
   }
 
-  buildChips("platformChips", PLATFORMS, () => platform, (v) => (platform = v));
+  function toggleOther(boxId, show) {
+    const box = document.getElementById(boxId);
+    if (show) {
+      box.classList.remove("hidden");
+      box.focus();
+    } else {
+      box.classList.add("hidden");
+    }
+  }
+
+  buildChips("platformChips", PLATFORMS, () => platform, (v) => (platform = v), ICONS);
   buildChips("footageChips", FOOTAGE, () => footage, (v) => {
     footage = v;
-    const otherBox = document.getElementById("footageOther");
-    if (v === "other") {
-      otherBox.classList.remove("hidden");
-      otherBox.focus();
-    } else {
-      otherBox.classList.add("hidden");
-    }
+    toggleOther("footageOther", v === "other");
   });
-
-  const vibeChips = document.getElementById("vibeChips");
-  VIBES.forEach((v) => {
-    const b = document.createElement("button");
-    b.className = "chip" + (v === vibe ? " active" : "");
-    b.textContent = v;
-    b.onclick = () => {
-      vibe = v;
-      [...vibeChips.children].forEach((c, i) =>
-        c.classList.toggle("active", VIBES[i] === vibe)
-      );
-    };
-    vibeChips.appendChild(b);
+  buildChips("vibeChips", VIBES, () => vibe, (v) => {
+    vibe = v;
+    toggleOther("vibeOther", v === "other");
   });
 
   const descEl = document.getElementById("desc");
@@ -400,6 +418,19 @@
       showError("You picked \u201cOther\u201d \u2014 tell us what kind of footage it is.");
       return;
     }
+    const vibeOtherText = document.getElementById("vibeOther").value.trim();
+    if (vibe === "other" && !vibeOtherText) {
+      showError("You picked \u201cOther\u201d for the vibe \u2014 describe it in a few words.");
+      return;
+    }
+    // Resolve the vibe to a readable string for the AI.
+    let vibeLabel;
+    if (vibe === "other") {
+      vibeLabel = vibeOtherText;
+    } else {
+      const found = VIBES.find((x) => x.id === vibe);
+      vibeLabel = found ? found.label : vibe;
+    }
     clearError();
     genBtn.disabled = true;
     genBtn.textContent = "Rolling…";
@@ -410,7 +441,7 @@
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ desc, platform, footage, otherText, vibe }),
+        body: JSON.stringify({ desc, platform, footage, otherText, vibe: vibeLabel }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -449,9 +480,13 @@
           <div class="set-name">${esc(r.setting)}</div>
           <div class="set-why">${esc(r.why)}</div>
         </div>`).join("");
+      const isVertical = /vertical|9:16/i.test(plan.settings.orientation || "");
+      const ratioShape = isVertical
+        ? '<svg width="11" height="17" viewBox="0 0 11 18" fill="none" stroke="#14110d" stroke-width="1.4" aria-hidden="true" style="margin-right:7px;vertical-align:-3px;"><rect x="1" y="1" width="9" height="16" rx="1.5"/></svg>'
+        : '<svg width="17" height="12" viewBox="0 0 18 12" fill="none" stroke="#14110d" stroke-width="1.4" aria-hidden="true" style="margin-right:7px;vertical-align:-1px;"><rect x="1" y="1" width="16" height="10" rx="1.5"/></svg>';
       const orient = plan.settings.orientation
         ? `<div class="orient">
-             <span class="orient-tag">${esc(plan.settings.orientation)}</span>
+             <span class="orient-tag">${ratioShape}${esc(plan.settings.orientation)}</span>
              <span class="orient-why">${esc(plan.settings.orientation_why || "")}</span>
            </div>`
         : "";
