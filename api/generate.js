@@ -76,11 +76,11 @@ Return ONLY valid JSON (no markdown, no backticks, no preamble) with this exact 
     { "name": "shot name", "framing": "how to frame it on a phone, noting orientation where useful", "why": "one sentence on why it matters" }
   ],
   "lighting": ["3 to 4 concise, phone-specific lighting tips that suit the vibe"],
-  "audio": ["2 to 3 concise audio tips for phone shooting"],
+  "audio": ["2 to 3 simple audio tips that require NO change to phone settings — focus on getting the mic close to the sound, reducing wind/background noise, and recording a few seconds of room tone; never mention stereo, mono, or audio settings"],
   "gotcha": "one common beginner mistake to avoid for this kind of shoot"
 }
 
-For "settings.recommendations" give 3 to 4 items covering things like resolution, frame rate, and one or two vibe-specific choices (e.g. locking exposure for a controlled look, or a higher frame rate for smooth motion). Frame every setting as a recommendation WITH a reason ("24fps gives a filmic feel" / "1080p keeps files manageable for fast social posting"), never as a strict rule, and keep the language usable on any modern phone — no model-specific menu names or button paths.
+For "settings.recommendations" give 2 to 3 items focused on resolution and frame rate, chosen to match what the chosen platform itself recommends as best practice (e.g. social vertical platforms favor 1080p 9:16; YouTube favors 1080p or 4K 16:9; broadcast/theatrical favors 4K 16:9 at 24fps). You may add ONE vibe-related frame-rate note if it genuinely helps (e.g. 24fps for a filmic feel, 60fps for crisp action). Frame every setting as a recommendation WITH a short plain-language reason, never a rigid command. CRITICAL SIMPLICITY RULES: only recommend things a beginner can set with a single tap in their phone's normal camera app. Do NOT tell them to lock exposure, lock focus, shoot in stereo, change audio settings, enable manual/pro modes, or dive into menus. Keep their phone on its default audio and exposure. The goal is zero room for error.
 
 Give 4 to 6 shots. Keep everything practical and specific to shooting on a phone. No fluff.`;
 
